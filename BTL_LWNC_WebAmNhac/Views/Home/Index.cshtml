@@ -23,12 +23,22 @@
     <div class="tab-pane fade" id="library-tab-pane" role="tabpanel" aria-labelledby="library-tab" tabindex="0">@await Html.PartialAsync("_LibraryPartialView")</div>
 </div>
 
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    @Html.Partial("_LoginPartialView")
+</div>
+<div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+    @Html.Partial("_RegisterPartialView")
+</div>
+
+
+
 @section Scripts{
     <script src="~/lib/jquery/dist/jquery.min.js" type="text/javascript"></script>
     <script>
         $(document).ready(function () {
             console.log("ready");
             LoadPlaylist(0);
+            checkLogin();
         });
         $("#hit-tab").on('click',function () {
             console.log("click tab hit");
@@ -44,7 +54,6 @@
             var pid = $(this).data('id');
             LoadPlaylist(pid);
             LoadRanking(pid);
-
         });
         $(".tab__genre").click(function () {
             // Loại bỏ lớp active từ tất cả các thẻ
@@ -52,15 +61,137 @@
             // Thêm lớp active cho thẻ được nhấp vào
             $(this).addClass("active");
         });
+        $('#searchInput').on('input', function () {
+            var searchTerm = $(this).val().trim();
+            if (searchTerm !== '') {
+                // Hiển thị danh sách sản phẩm tìm kiếm nếu ô tìm kiếm không trống
+                $('#searchResults').show();
+                $.ajax({
+                    url: 'Home/Search',
+                    dataType: "json",
+                    type: 'get',
+                    contentType: 'application/json; charset=utf-8',
+                    data: { searchText: searchTerm },
+                    async: true,
+                    processData: true,
+                    cache: false,
+                    success: function (data) {
+                        //console.log(data)
+                        if (data.code == 200) {
+                            $('#searchResults').empty();
+                            var html = ``;
+                            $.each(data.list, function (i, p) {
+                                html += `<a href="@playlistUrl?id=${p.id}" class="list-group-item list-group-item-action">`;
+                                html += `<div class="d-flex align-items-center">`;
+                                html += `<img src="/image/${p.thumbnail}" alt="Product Image" class="me-3" style="max-width: 50px;">`;
+                                html += `<div><h5 class="mb-0">${p.name}</h5><p class="mb-0">${p.artist}</p></div></div></a>`;
+                            });
+                            $('#searchResults').html(html);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert('error' + xhr.statusText);
+                        return;
+                    }
+                });
+
+            } else {
+                // Nếu ô tìm kiếm trống, ẩn danh sách sản phẩm tìm kiếm
+                $('#searchResults').hide();
+            }
+        });
+
+        // Lắng nghe sự kiện khi người dùng nhấn vào nút tìm kiếm
+        $('#searchButton').on('click', function () {
+            // Tương tự như lắng nghe sự kiện input, bạn có thể thực hiện tìm kiếm ở đây
+        });
         $(document).on('click', ".fa-heart", function () {
             console.log("click");
+        });
+
+        $("#password").keypress(function (event) {
+            if (event.keyCode === 13) {
+                login();
+            }
+        });
+        $("#showPasswordBtn").mouseover(function () {
+            $("#password").attr("type", "text");
+        });
+
+        // Di chuột ra khỏi nút hiện mật khẩu
+        $("#showPasswordBtn").mouseleave(function () {
+            $("#password").attr("type", "password");
+        });
+        $("#submit__login").on('click', function () {
+            login();
+        });
+        $('#age').on('input', function () {
+            // Lấy giá trị hiện tại của input range
+            var value = $(this).val();
+            // Hiển thị giá trị lên phần tử span có id là "rangeValue"
+            $('#ageValue').text(value);
+        });
+        $("#submit__register").on('click', function(){
+            if (!$('#checkagree').is(':checked')) {
+                alert("Vui lòng đồng ý điều khoản");
+                return;
+            }
+            console.log('sign up..');
+            var name = $('#name').val().trim();
+            var email = $('#emailR').val().trim();
+            var age = $('#age').val();
+            var password = $('#passwordR').val().trim();
+            var password2 = $('#password2').val().trim();
+
+            if (name.length == 0 || email.length == 0
+                || password.length == 0 || password2.length == 0) {
+                alert("vui lòng nhập đủ dữ liệu");
+                return;
+            }
+
+            if (password2 != password) {
+                alert("Mật khẩu không khớp");
+                $('#password').focus();
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('name', name);
+            formData.append('email', email);
+            formData.append('age', age);
+            formData.append('password', password);
+
+            $.ajax({
+                url: '@Url.Action("Register","Account")',
+                dataType: "json",
+                type: 'post',
+                contentType: false,
+                data: formData,
+                async: true,
+                processData: false,
+                cache: false,
+                success: function (data) {
+                    if (data.code == 200) {
+                        alert("" + data.msg);
+                        $('#emailR').val('');
+                        $('#passwordR').val('');
+                        $('#name').val('');
+                        $('#password2').val('');
+                        $('#age').val('18');
+                        $("#registerModal").modal("hide");
+                        location.reload();
+                    } else {
+                        alert(data.msg)
+                    }
+                }
+            });
+
         });
         function LoadPlaylist(check) {
             var requestData = null;
             if (check != 0) {
                 requestData = { id: check }
             }
-
             $.ajax({
                 url: 'Home/ListPlaylists',
                 dataType: "json",
@@ -73,7 +204,7 @@
                 success: function (data) {
                     //console.log(data)
                     if (data.code == 200) {
-                        console.log(data.list);
+/*                        console.log(data.list);*/
                         $('#list__playlists').empty();
                         var html = ``;
                         $.each(data.list, function (i, p) {
@@ -139,6 +270,81 @@
             htmlR += `<td>${p.artist}</td>`;
             htmlR += `<td>${p.viewCount}</td></tr>`;
             return htmlR;
+        }
+        function checkLogin() {
+            $.ajax({
+                url: 'Account/CheckLogin',
+                dataType: "json",
+                type: 'get',
+                contentType: 'application/json; charset=utf-8',
+                data: null,
+                async: true,
+                processData: true,
+                cache: false,
+                success: function (data) {
+                    //console.log(data)
+                    if (data.code == 200) {
+                        console.log(data.response);
+                        if (data.response) {
+                            $("#btn__login, #btn__register").hide();
+                            $("#btn__account").removeClass("d-none");
+                            $("#library-tab").prop("disabled", false);
+                            console.log(data.msg);
+                            return;
+                        }
+                        if (!data.response) {
+                            $("#btn__login, #btn__register").show();
+                            $("#btn__account").hide();
+                            console.log(data.msg);
+                            return;
+                        }
+                        alert("Lỗi không xác định!!");
+                    }
+                },
+                error: function (xhr) {
+                    alert('error' + xhr.statusText);
+                    return;
+                }
+            });
+        }
+        function login() {
+            console.log('login..');
+            var email = $('#email').val().trim();
+            var password = $('#password').val().trim();
+
+            if (email.length == 0 || password.length == 0) {
+                alert("vui lòng nhập đủ dữ liệu");
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('email', email);
+            formData.append('password', password);
+
+            $.ajax({
+                url: '@Url.Action("Login","Account")',
+                dataType: "json",
+                type: 'post',
+                contentType: false,
+                data: formData,
+                async: true,
+                processData: false,
+                cache: false,
+                success: function (data) {
+                    if (data.code == 200) {
+                        console.log(data.response);
+                        alert("" + data.msg + ". Xin chào, " + data.response.name);
+/*                        console.log(data.response);*/
+                        $('#email').val('');
+                        $('#password').val('');
+                        $("#loginModal").modal("hide");
+                        location.reload();
+
+                    } else {
+                        alert(data.msg)
+                    }
+                }
+            });
         }
     </script>
 }

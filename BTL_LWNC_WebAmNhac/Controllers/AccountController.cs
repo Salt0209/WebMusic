@@ -15,11 +15,11 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace BTL_LWNC_WebAmNhac.Controllers
 {
-    public class UsersController : Controller
+    public class AccountController : Controller
 	{
 		private readonly BTL_LWNC_WebAmNhacContext _context;
 
-		public UsersController(BTL_LWNC_WebAmNhacContext context)
+		public AccountController(BTL_LWNC_WebAmNhacContext context)
 		{
 			_context = context;
 		}
@@ -61,29 +61,39 @@ namespace BTL_LWNC_WebAmNhac.Controllers
 			return RedirectToAction("Index", "Home");
 		}
 		[HttpPost]
-		public async Task<IActionResult> Login(string username, string password)
+		public async Task<JsonResult> Login(string email, string password)
 		{
-			var user = _context.User.Where(p => p.Name == username && p.Password == password).FirstOrDefault<User>();
+			var user = _context.User.Where(p => p.Email == email && p.Password == password).FirstOrDefault<User>();
 			if (user == null || _context.User == null)
 			{
-				return View();
-			}
+                return Json(new { code = 500, msg = "Đăng nhập thất bại:"});
+            }
 			var claims = new List<Claim>
 			{
-				new Claim(ClaimTypes.Name, user.Name),
-				new Claim(ClaimTypes.Role, user.Role.Trim()),
-				new Claim(ClaimTypes.NameIdentifier,user.ID.ToString()),
+				new Claim(ClaimTypes.Name, user.Email),
+                new Claim("FullName", user.Name),
+                new Claim(ClaimTypes.Role, user.Role.Trim()),
 			};
 
 			System.Diagnostics.Debug.WriteLine($"User registered: {user.ID}");
 
 			var claimsIdentity = new ClaimsIdentity(
 			claims, CookieAuthenticationDefaults.AuthenticationScheme);
-			await HttpContext.SignInAsync(
-			CookieAuthenticationDefaults.AuthenticationScheme,
-			new ClaimsPrincipal(claimsIdentity));
+            await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(claimsIdentity));
 
-			return RedirectToAction("Index","Home");
+/*            _logger.LogInformation("User {Email} logged in at {Time}.",
+            user.Email, DateTime.UtcNow);*/
+
+
+            return Json(new { code = 200, response = user, msg = "Đăng nhập thành công" });
+        }
+		public JsonResult CheckLogin()
+		{
+			bool check = User.Identity.IsAuthenticated;
+
+            return Json(new { code = 200, response = check, msg = "Đã check" }); ;
 		}
 		public IActionResult Register()
 		{
@@ -91,20 +101,26 @@ namespace BTL_LWNC_WebAmNhac.Controllers
 		}
 
 		[HttpPost]
-		public IActionResult Register(string username,string email, string password)
+		public JsonResult Register(string name,string email, int age, string password)
 		{
 			var newUser = new User
 			{
-				Name = username,
+				Name = name,
 				Email = email,
+				Age = age,
 				Password = password,
 				Role = "User"
 			};
-
-			_context.User.Add(newUser);
-			_context.SaveChanges();
-			return RedirectToAction("Login", "Users");
-		}
+			try
+			{
+                _context.User.Add(newUser);
+                _context.SaveChangesAsync();
+                return Json(new { code = 200, msg = "Đăng ký thành công" });
+            }
+			catch(DbUpdateConcurrencyException) {
+                return Json(new { code = 500, msg = "Đăng ký thất bại" });
+            }
+        }
 
 		// GET: Users/Create
 		public IActionResult Create()
