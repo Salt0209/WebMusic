@@ -8,7 +8,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
             <!-- Logo -->
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="@Url.Action("Index","Home")">
                 <img src="~/image/logo.jpg" alt="Your Logo" width="30" height="30" class="d-inline-block align-top">
             </a>
             <!-- Tên trang -->
@@ -16,14 +16,36 @@
                 My Music
             </span>
             <!-- Thanh tìm kiếm -->
-            <form class="d-flex ms-auto">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success" type="submit">Search</button>
-            </form>
+            <div class="position-relative">
+                <div class="d-flex ms-auto">
+                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" id="searchInput">
+                    <button class="btn btn-outline-success" type="submit" id="searchButton">Search</button>
+                </div>
+                <div id="searchResults" class="dropdown-menu dropdown-menu-end mt-2 position-absolute" style="width: 300px; max-height: 200px; overflow-y: auto; display:none;">
+                    
+                </div>
+            </div>
             <!-- Nút đăng nhập -->
-            <button class="btn btn-outline-primary mx-2" type="button">Đăng nhập</button>
+            <button id="btn__login" class="btn btn-outline-primary mx-2" type="button"
+                    data-bs-toggle="modal" data-bs-target="#loginModal">
+                Đăng nhập
+            </button>
             <!-- Nút đăng ký -->
-            <button class="btn btn-primary" type="button">Đăng ký</button>
+            <button id="btn__register" class="btn btn-primary" type="button"
+                    data-bs-toggle="modal" data-bs-target="#registerModal">
+                Đăng ký
+            </button>
+            <div class="dropdown mx-2 d-none" id="btn__account">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Tài khoản
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Thông tin tài khoản</a></li>
+                    <li><a class="dropdown-item" href="#">Đổi mật khẩu</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="@Url.Action("LogOut","Account")">Đăng xuất</a></li>
+                </ul>
+            </div>
         </div>
     </nav>
 </header>

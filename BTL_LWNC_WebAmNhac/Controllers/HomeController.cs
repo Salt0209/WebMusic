@@ -4,6 +4,7 @@ using BTL_LWNC_WebAmNhac.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace BTL_LWNC_WebAmNhac.Controllers
@@ -50,6 +51,24 @@ namespace BTL_LWNC_WebAmNhac.Controllers
             {
                 return Json(new { code = 500, msg = "Lấy dữ liệu thất bại:" + ex.Message });
             }
+        }
+
+        [HttpGet]
+        public IActionResult Search(string searchText)
+        {
+            // Tìm kiếm trong danh sách sản phẩm theo tên, giá, brand hoặc category
+            var searchResults = _context.Playlist
+                .Where(p => p.Name.Contains(searchText))
+                .Select(p => new
+                {
+                    Id = p.ID,
+                    Name = p.Name,
+                    Artist = p.User.Name,
+                    Thumbnail = p.Thumbnail
+                })
+            .ToList();
+
+            return Json(new { code = 200, list = searchResults, msg = "Lấy dữ liệu thành công" });
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
