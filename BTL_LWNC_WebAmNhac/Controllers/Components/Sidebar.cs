@@ -1,0 +1,28 @@
+﻿using BTL_LWNC_WebAmNhac.Data;
+using BTL_LWNC_WebAmNhac.Models;
+using Microsoft.AspNetCore.Mvc;
+
+namespace BTL_LWNC_WebAmNhac.Controllers.Components
+{
+    public class Sidebar : ViewComponent
+    {
+        private readonly BTL_LWNC_WebAmNhacContext _context;
+
+        public Sidebar(BTL_LWNC_WebAmNhacContext context)
+        {
+            _context = context;
+        }
+        public IViewComponentResult Invoke()
+        {
+            if (_context.Genre != null)
+            {
+                return View(_context.Genre.ToList());
+            }
+            else
+            {
+                var defaultModel = new List<Genre>(); // Change the type to match your model
+                return View(defaultModel);
+            }
+        }
+    }
+}

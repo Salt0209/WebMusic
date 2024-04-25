@@ -1,0 +1,145 @@
+﻿@{
+    ViewData["Title"] = "Trang chủ";
+
+    string playlistUrl = Url.Action("Playlist", "PlaylistDetails");
+}
+@model Home
+<!-- Danh sách bài hát -->
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="hit-tab" data-bs-toggle="tab" data-bs-target="#hit-tab-pane" type="button" role="tab" aria-controls="hit-tab-pane" aria-selected="true">Khám phá</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="ranking-tab" data-bs-toggle="tab" data-bs-target="#ranking-tab-pane" type="button" role="tab" aria-controls="ranking-tab-pane" aria-selected="false">Bảng xếp hạng</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="library-tab" data-bs-toggle="tab" data-bs-target="#library-tab-pane" type="button" role="tab" aria-controls="library-tab-pane" aria-selected="false" disabled>Thư viện</button>
+    </li>
+
+</ul>
+<div class="tab-content" id="myTabContent">
+    <div class="tab-pane fade show active" id="hit-tab-pane" role="tabpanel" aria-labelledby="hit-tab" tabindex="0">@await Html.PartialAsync("_HitPartialView")</div>
+    <div class="tab-pane fade" id="ranking-tab-pane" role="tabpanel" aria-labelledby="ranking-tab" tabindex="0">@await Html.PartialAsync("_RankingPartialView")</div>
+    <div class="tab-pane fade" id="library-tab-pane" role="tabpanel" aria-labelledby="library-tab" tabindex="0">@await Html.PartialAsync("_LibraryPartialView")</div>
+</div>
+
+@section Scripts{
+    <script src="~/lib/jquery/dist/jquery.min.js" type="text/javascript"></script>
+    <script>
+        $(document).ready(function () {
+            console.log("ready");
+            LoadPlaylist(0);
+        });
+        $("#hit-tab").on('click',function () {
+            console.log("click tab hit");
+            $(".tab__genre").removeClass("active");
+            LoadPlaylist(0);
+        });
+        $("#ranking-tab").on('click',function () {
+            console.log("click tab ranking");
+            $(".tab__genre").removeClass("active");
+            LoadRanking(0);
+        });
+        $(document).on('click', ".tab__genre", function () {
+            var pid = $(this).data('id');
+            LoadPlaylist(pid);
+            LoadRanking(pid);
+
+        });
+        $(".tab__genre").click(function () {
+            // Loại bỏ lớp active từ tất cả các thẻ
+            $(".tab__genre").removeClass("active");
+            // Thêm lớp active cho thẻ được nhấp vào
+            $(this).addClass("active");
+        });
+        $(document).on('click', ".fa-heart", function () {
+            console.log("click");
+        });
+        function LoadPlaylist(check) {
+            var requestData = null;
+            if (check != 0) {
+                requestData = { id: check }
+            }
+
+            $.ajax({
+                url: 'Home/ListPlaylists',
+                dataType: "json",
+                type: 'get',
+                contentType: 'application/json; charset=utf-8',
+                data: requestData,
+                async: true,
+                processData: true,
+                cache: false,
+                success: function (data) {
+                    //console.log(data)
+                    if (data.code == 200) {
+                        console.log(data.list);
+                        $('#list__playlists').empty();
+                        var html = ``;
+                        $.each(data.list, function (i, p) {
+                            html += generateProduct(p);
+                        });
+                        $('#list__playlists').html(html);
+                    }
+                },
+                error: function (xhr) {
+                    alert('error' + xhr.statusText);
+                    return;
+                }
+            });
+        }
+        function LoadRanking(check) {
+            var requestData = null;
+            if (check != 0) {
+                requestData = { id: check }
+            }
+            $.ajax({
+                url: 'Home/LoadRankingPlaylists',
+                dataType: "json",
+                type: 'get',
+                contentType: 'application/json; charset=utf-8',
+                data: requestData,
+                async: true,
+                processData: true,
+                cache: false,
+                success: function (data) {
+                    //console.log(data)
+                    if (data.code == 200) {
+                        console.log(data.list);
+                        $('#list__ranking').empty();
+                        var htmlR = ``;
+                        $.each(data.list, function (i, p) {
+                            if (i == 10) {
+                                return false;
+                            }
+                            htmlR += generateProductRanking(i, p);
+                        });
+                        $('#list__ranking').html(htmlR);
+                    }
+                },
+                error: function (xhr) {
+                    alert('error' + xhr.statusText);
+                    return;
+                }
+            });
+        }
+        function generateProduct(p) {
+            var html = `<div class="col-md-3 m-2"><div class="card product-card">`;
+            html += `<a href="@playlistUrl?id=${p.id}"><img src="/image/${p.thumbnail}" alt="..." class="img-thumbnail">`;
+            html += `<div class="play-icon-container"><i class="fas fa-play play-icon"></i></div></a>`;
+            html += `<i class="fas fa-heart heart-icon active"></i><div class="card-body">`;
+            html += `<h5 class="card-title">${p.name}</h5>`;
+            html += `<p class="card-text">${p.detail}</p></div></div></div>`;
+            return html;
+        }
+        function generateProductRanking(i, p) {
+            var htmlR = `<tr >`;
+            htmlR += `<th scope="row">${(i + 1)}</th>`;
+            htmlR += `<td><a href="@playlistUrl?id=${p.id}">${p.name}</a></td>`;
+            htmlR += `<td>${p.artist}</td>`;
+            htmlR += `<td>${p.viewCount}</td></tr>`;
+            return htmlR;
+        }
+    </script>
+}
+
