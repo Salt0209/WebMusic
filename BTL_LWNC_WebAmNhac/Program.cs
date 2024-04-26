@@ -19,7 +19,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;
         options.AccessDeniedPath = "/Forbidden/";
     });
-builder.Services.AddScoped<IHomeInterface, HomeService>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<IHomeInterface, HomeService>();
 
 var app = builder.Build();
 

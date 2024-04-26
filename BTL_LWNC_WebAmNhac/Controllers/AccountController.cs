@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Authorization;
+using BTL_LWNC_WebAmNhac.Services;
 
 namespace BTL_LWNC_WebAmNhac.Controllers
 {
@@ -72,6 +73,7 @@ namespace BTL_LWNC_WebAmNhac.Controllers
 			{
 				new Claim(ClaimTypes.Name, user.Email),
                 new Claim("FullName", user.Name),
+                new Claim("UserId", user.ID.ToString()),
                 new Claim(ClaimTypes.Role, user.Role.Trim()),
 			};
 
@@ -91,11 +93,46 @@ namespace BTL_LWNC_WebAmNhac.Controllers
         }
 		public JsonResult CheckLogin()
 		{
-			bool check = User.Identity.IsAuthenticated;
+			bool check = IsLogin();
 
             return Json(new { code = 200, response = check, msg = "Đã check" }); ;
 		}
-		public IActionResult Register()
+        [HttpGet]
+        public IActionResult IsLoggedIn()
+        {
+            bool isLoggedIn = IsLogin(); // Assuming IsLogin() is a method in your controller
+            return Json(new { isLoggedIn });
+        }
+        public bool IsLogin()
+		{
+			return User.Identity.IsAuthenticated;
+
+        }
+        [HttpGet]
+        public JsonResult ChangeFavourite(int id)
+        {
+            try
+            {
+				var userId = Int32.Parse(User.FindFirst("UserId").Value);
+                var list = _context.UserFavourite.FirstOrDefault(p=>p.UserID==userId&&p.PlaylistID==id);
+				if (list == null)
+				{
+					var newFav = new UserFavourite(userId,id);
+					_context.UserFavourite.Add(newFav);
+					_context.SaveChanges();
+					return Json(new { code = 200, list = list, msg = "Thêm mới thành công" });
+                }
+				_context.UserFavourite.Remove(list);
+				_context.SaveChanges();
+				return Json(new { code = 200, list = list, msg = "Xoá thành công" });
+            }
+            catch (Exception ex)
+            {
+				var a = ex.Message;
+                return Json(new { code = 500, msg = "Lấy dữ liệu thất bại:" + ex.Message });
+            }
+        }
+        public IActionResult Register()
 		{
 			return View();
 		}

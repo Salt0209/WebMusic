@@ -16,36 +16,38 @@
                 My Music
             </span>
             <!-- Thanh tìm kiếm -->
-            <div class="position-relative">
-                <div class="d-flex ms-auto">
-                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" id="searchInput">
-                    <button class="btn btn-outline-success" type="submit" id="searchButton">Search</button>
+            <div class="d-flex ms-auto">
+                <div class="position-relative">
+                    <div class="d-flex ms-auto">
+                        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" id="searchInput">
+                        <button class="btn btn-outline-success" type="submit" id="searchButton">Search</button>
+                    </div>
+                    <div id="searchResults" class="dropdown-menu dropdown-menu-end mt-2 position-absolute" style="width: 300px; max-height: 200px; overflow-y: auto; display:none;">
+
+                    </div>
                 </div>
-                <div id="searchResults" class="dropdown-menu dropdown-menu-end mt-2 position-absolute" style="width: 300px; max-height: 200px; overflow-y: auto; display:none;">
-                    
                 </div>
-            </div>
-            <!-- Nút đăng nhập -->
-            <button id="btn__login" class="btn btn-outline-primary mx-2" type="button"
-                    data-bs-toggle="modal" data-bs-target="#loginModal">
-                Đăng nhập
-            </button>
-            <!-- Nút đăng ký -->
-            <button id="btn__register" class="btn btn-primary" type="button"
-                    data-bs-toggle="modal" data-bs-target="#registerModal">
-                Đăng ký
-            </button>
-            <div class="dropdown mx-2 d-none" id="btn__account">
-                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Tài khoản
+                <!-- Nút đăng nhập -->
+                <button id="btn__login" class="btn btn-outline-primary mx-2" type="button"
+                        data-bs-toggle="modal" data-bs-target="#loginModal">
+                    Đăng nhập
                 </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">Thông tin tài khoản</a></li>
-                    <li><a class="dropdown-item" href="#">Đổi mật khẩu</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="@Url.Action("LogOut","Account")">Đăng xuất</a></li>
-                </ul>
+                <!-- Nút đăng ký -->
+                <button id="btn__register" class="btn btn-primary" type="button"
+                        data-bs-toggle="modal" data-bs-target="#registerModal">
+                    Đăng ký
+                </button>
+                <div class="dropdown mx-2 d-none" id="btn__account">
+                    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Tài khoản
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Thông tin tài khoản</a></li>
+                        <li><a class="dropdown-item" href="#">Đổi mật khẩu</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="@Url.Action("LogOut","Account")">Đăng xuất</a></li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
+</nav>
 </header>

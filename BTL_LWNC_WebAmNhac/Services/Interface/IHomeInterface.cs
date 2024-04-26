@@ -5,7 +5,9 @@ namespace BTL_LWNC_WebAmNhac.Services.Interface
 {
     public interface IHomeInterface
     {
-        List<Playlist> ListPlaylists(int? id);
+        List<object> ListPlaylists(int? id);
         List<object> ListRankingPlaylists(int? id);
+
+        List<object> Search(string searchText);
     }
 }

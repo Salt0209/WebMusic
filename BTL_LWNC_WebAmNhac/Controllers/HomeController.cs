@@ -30,7 +30,7 @@ namespace BTL_LWNC_WebAmNhac.Controllers
         {
             try
             {
-                List<Playlist> list = _homeService.ListPlaylists(id);
+                List<object> list = _homeService.ListPlaylists(id);
                 return Json(new { code = 200, list = list, msg = "Lấy dữ liệu thành công" });
             }
             catch (Exception ex)
@@ -57,16 +57,7 @@ namespace BTL_LWNC_WebAmNhac.Controllers
         public IActionResult Search(string searchText)
         {
             // Tìm kiếm trong danh sách sản phẩm theo tên, giá, brand hoặc category
-            var searchResults = _context.Playlist
-                .Where(p => p.Name.Contains(searchText))
-                .Select(p => new
-                {
-                    Id = p.ID,
-                    Name = p.Name,
-                    Artist = p.User.Name,
-                    Thumbnail = p.Thumbnail
-                })
-            .ToList();
+            var searchResults = _homeService.Search(searchText);
 
             return Json(new { code = 200, list = searchResults, msg = "Lấy dữ liệu thành công" });
         }
