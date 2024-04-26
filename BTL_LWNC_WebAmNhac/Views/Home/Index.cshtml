@@ -50,6 +50,44 @@
             $(".tab__genre").removeClass("active");
             LoadRanking(0);
         });
+        $("#library-tab").on('click', function () {
+            console.log("click tab library");
+            $.ajax({
+                url: 'Home/ListPlaylists',
+                dataType: "json",
+                type: 'get',
+                contentType: 'application/json; charset=utf-8',
+                data: null,
+                async: true,
+                processData: true,
+                cache: false,
+                success: function (data) {
+                    console.log(data)
+                    if (data.code == 200) {
+                        /*                        console.log(data.list);*/
+                        $('#list__library').empty();
+                        var html = ``;
+                        $.each(data.list, function (i, p) {
+                            if (p.isFav == true) {
+                                html += `<div class="card m-2" style="width: 18rem;">`;
+                                html += `<img src="/image/${p.thumbnail}" class="card-img-top" alt="">`;
+                                html += `<div class="card-body">`;
+                                html += `<h5 class="card-title">${p.name}</h5 >`;
+                                html += `<p class="card-text">${p.detail}</p >`;
+                                html += `<a href="@playlistUrl?id=${p.id}" class="btn btn-primary">Nghe</a>`;
+                                html += `<a class="remove__fav" data-id=${p.id} style="margin-left:20px"><i class="fas fa-trash-alt"></i></a></div></div></div></div>`;
+                            }
+                            
+                        });
+                        $('#list__library').html(html);
+                    }
+                },
+                error: function (xhr) {
+                    alert('error' + xhr.statusText);
+                    return;
+                }
+            });
+        });
         $(document).on('click', ".tab__genre", function () {
             var pid = $(this).data('id');
             LoadPlaylist(pid);
@@ -106,7 +144,57 @@
             // Tương tự như lắng nghe sự kiện input, bạn có thể thực hiện tìm kiếm ở đây
         });
         $(document).on('click', ".fa-heart", function () {
-            console.log("click");
+            console.log("click to change fav");
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/Account/IsLoggedIn', // Replace 'YourController' with the name of your controller
+                type: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    if (response.isLoggedIn) {
+                        // User is logged in, perform your logic here
+                        console.log("User is logged in");
+                        
+                        $.ajax({
+                            url: '/Account/ChangeFavourite',
+                            dataType: "json",
+                            type: 'get',
+                            contentType: false,
+                            data: {id:id},
+                            async: true,
+                            processData: true,
+                            cache: false,
+                            success: function (data) {
+                                if (data.code==200) {
+                                    // User is logged in, perform your logic here
+                                    console.log("check after change: " + data.msg);
+                                    console.log("check after change: " + data.list);
+                                    LoadPlaylist();
+                                    return;
+                                }
+                                if (data.code == 500) {
+                                    console.log("change fail: " + data.msg);
+                                    return;
+                                }
+                                console.log("Loi khong xac dinh");
+                                return;
+                            },
+                            error: function (xhr, status, error) {
+                                // Handle error
+                                console.error("Error:", error);
+                            }
+                        });
+                    } else {
+                        // User is not logged in, handle accordingly
+                        console.log("User is not logged in");
+                        alert("Bạn chưa đăng nhập");
+                    }
+                },
+                error: function (xhr, status, error) {
+                    // Handle error
+                    console.error("Error:", error);
+                }
+            });
         });
 
         $("#password").keypress(function (event) {
@@ -202,7 +290,7 @@
                 processData: true,
                 cache: false,
                 success: function (data) {
-                    //console.log(data)
+                    console.log(data)
                     if (data.code == 200) {
 /*                        console.log(data.list);*/
                         $('#list__playlists').empty();
@@ -255,10 +343,11 @@
             });
         }
         function generateProduct(p) {
+            var isFavClass = p.isFav ? " active" : "";
             var html = `<div class="col-md-3 m-2"><div class="card product-card">`;
             html += `<a href="@playlistUrl?id=${p.id}"><img src="/image/${p.thumbnail}" alt="..." class="img-thumbnail">`;
             html += `<div class="play-icon-container"><i class="fas fa-play play-icon"></i></div></a>`;
-            html += `<i class="fas fa-heart heart-icon active"></i><div class="card-body">`;
+            html += `<i class="fas fa-heart heart-icon ${isFavClass}" data-id="${p.id}"></i><div class="card-body">`;
             html += `<h5 class="card-title">${p.name}</h5>`;
             html += `<p class="card-text">${p.detail}</p></div></div></div>`;
             return html;
@@ -289,13 +378,13 @@
                             $("#btn__login, #btn__register").hide();
                             $("#btn__account").removeClass("d-none");
                             $("#library-tab").prop("disabled", false);
-                            console.log(data.msg);
+/*                            console.log(data.msg);*/
                             return;
                         }
                         if (!data.response) {
                             $("#btn__login, #btn__register").show();
                             $("#btn__account").hide();
-                            console.log(data.msg);
+/*                            console.log(data.msg);*/
                             return;
                         }
                         alert("Lỗi không xác định!!");
@@ -308,7 +397,7 @@
             });
         }
         function login() {
-            console.log('login..');
+/*            console.log('login..');*/
             var email = $('#email').val().trim();
             var password = $('#password').val().trim();
 

@@ -1,4 +1,5 @@
-﻿using BTL_LWNC_WebAmNhac.Data;
+﻿using BTL_LWNC_WebAmNhac.Controllers;
+using BTL_LWNC_WebAmNhac.Data;
 using BTL_LWNC_WebAmNhac.Models;
 using BTL_LWNC_WebAmNhac.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
@@ -9,11 +10,13 @@ namespace BTL_LWNC_WebAmNhac.Services
     public class HomeService : IHomeInterface
     {
         private readonly BTL_LWNC_WebAmNhacContext _context;
-        public HomeService(BTL_LWNC_WebAmNhacContext context)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public HomeService(BTL_LWNC_WebAmNhacContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
-        public List<Playlist> ListPlaylists(int? id)
+        public List<object> ListPlaylists(int? id)
         {
             try
             {
@@ -23,13 +26,50 @@ namespace BTL_LWNC_WebAmNhac.Services
                 {
                     list = list.Where(p => p.GenreID == id);
                 }
-
-                return list.ToList();
+                
+                var queryResult = list
+                      .Select(p => new
+                      {
+                          Id = p.ID,
+                          Name = p.Name,
+                          Artist = p.User.Name,
+                          Thumbnail = p.Thumbnail,
+                          Detail = p.Detail,
+                          ViewCount = p.ViewCount,
+                          IsFav = false
+                      })
+                      .ToList();
+                var isFav = _httpContextAccessor.HttpContext.User.Identity.IsAuthenticated;
+                if (isFav)
+                {
+                    var userId = Int32.Parse(_httpContextAccessor.HttpContext.User.FindFirst("UserId").Value);
+                    var updatedQueryResult = queryResult.Select(p =>
+                    {
+                        var isFav = checkFav(userId, p.Id); // Calculate IsFav for each item
+                        return new
+                        {
+                            p.Id,
+                            p.Name,
+                            p.Artist,
+                            p.Thumbnail,
+                            p.Detail,
+                            IsFav = isFav // Update IsFav property
+                        };
+                    }).ToList();
+                    return updatedQueryResult.Cast<object>().ToList();
+                }
+                return queryResult.Cast<object>().ToList();  
             }
             catch (Exception ex)
             {
                 throw new Exception("Error occurred while listing playlists.", ex);
             }
+        }
+        public bool checkFav(int uid, int? pid)
+        {
+
+            return _context.UserFavourite.Any(p => p.UserID == uid &&
+                p.PlaylistID==pid);
         }
 
         public List<object> ListRankingPlaylists(int? id)
@@ -64,6 +104,22 @@ namespace BTL_LWNC_WebAmNhac.Services
             {
                 throw new Exception("Error occurred while listing playlists.", ex);
             }
+        }
+
+        public List<object> Search(string searchText)
+        {
+            var searchResults = _context.Playlist
+                .Where(p => p.Name.Contains(searchText))
+                .Select(p => new
+                {
+                    Id = p.ID,
+                    Name = p.Name,
+                    Artist = p.User.Name,
+                    Thumbnail = p.Thumbnail
+                })
+            .ToList();
+
+            return searchResults.Cast<object>().ToList();
         }
     }
 }
