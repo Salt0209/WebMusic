@@ -132,6 +132,23 @@ namespace BTL_LWNC_WebAmNhac.Controllers
                 return Json(new { code = 500, msg = "Lấy dữ liệu thất bại:" + ex.Message });
             }
         }
+        [HttpGet]
+        public JsonResult RemoveFavourite(int id)
+        {
+            try
+            {
+                var userId = Int32.Parse(User.FindFirst("UserId").Value);
+                var list = _context.UserFavourite.FirstOrDefault(p => p.UserID == userId && p.PlaylistID == id);
+                _context.UserFavourite.Remove(list);
+                _context.SaveChanges();
+                return Json(new { code = 200, list = list, msg = "Xoá thành công" });
+            }
+            catch (Exception ex)
+            {
+                var a = ex.Message;
+                return Json(new { code = 500, msg = "Lấy dữ liệu thất bại:" + ex.Message });
+            }
+        }
         public IActionResult Register()
 		{
 			return View();

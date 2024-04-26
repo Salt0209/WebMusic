@@ -40,6 +40,128 @@
             LoadPlaylist(0);
             checkLogin();
         });
+        //Load danh sách bài hát
+        function LoadPlaylist(check) {
+            var requestData = null;
+            if (check != 0) {
+                requestData = { id: check }
+            }
+            $.ajax({
+                url: 'Home/ListPlaylists',
+                dataType: "json",
+                type: 'get',
+                contentType: 'application/json; charset=utf-8',
+                data: requestData,
+                async: true,
+                processData: true,
+                cache: false,
+                success: function (data) {
+                    console.log(data)
+                    if (data.code == 200) {
+/*                        console.log(data.list);*/
+                        $('#list__playlists').empty();
+                        var html = ``;
+                        $.each(data.list, function (i, p) {
+                            html += generateProduct(p);
+                        });
+                        $('#list__playlists').html(html);
+                    }
+                },
+                error: function (xhr) {
+                    alert('error' + xhr.statusText);
+                    return;
+                }
+            });
+        }
+        function generateProduct(p) {
+            var isFavClass = p.isFav ? " active" : "";
+            var html = `<div class="col-md-3 m-2"><div class="card product-card">`;
+            html += `<a href="@playlistUrl?id=${p.id}"><img src="/image/${p.thumbnail}" alt="..." class="img-thumbnail">`;
+            html += `<div class="play-icon-container"><i class="fas fa-play play-icon"></i></div></a>`;
+            html += `<i class="fas fa-heart heart-icon ${isFavClass}" data-id="${p.id}"></i><div class="card-body">`;
+            html += `<h5 class="card-title">${p.name}</h5>`;
+            html += `<p class="card-text">${p.detail}</p></div></div></div>`;
+            return html;
+        }
+        //Load bảng xếp hạng
+        function LoadRanking(check) {
+            var requestData = null;
+            if (check != 0) {
+                requestData = { id: check }
+            }
+            $.ajax({
+                url: 'Home/LoadRankingPlaylists',
+                dataType: "json",
+                type: 'get',
+                contentType: 'application/json; charset=utf-8',
+                data: requestData,
+                async: true,
+                processData: true,
+                cache: false,
+                success: function (data) {
+                    //console.log(data)
+                    if (data.code == 200) {
+                        console.log(data.list);
+                        $('#list__ranking').empty();
+                        var htmlR = ``;
+                        $.each(data.list, function (i, p) {
+                            if (i == 10) {
+                                return false;
+                            }
+                            htmlR += generateProductRanking(i, p);
+                        });
+                        $('#list__ranking').html(htmlR);
+                    }
+                },
+                error: function (xhr) {
+                    alert('error' + xhr.statusText);
+                    return;
+                }
+            });
+        }
+        function generateProductRanking(i, p) {
+            var htmlR = `<tr >`;
+            htmlR += `<th scope="row">${(i + 1)}</th>`;
+            htmlR += `<td><a href="@playlistUrl?id=${p.id}">${p.name}</a></td>`;
+            htmlR += `<td>${p.artist}</td>`;
+            htmlR += `<td>${p.viewCount}</td></tr>`;
+            return htmlR;
+        }
+        //Kiểm tra trạng thái đăng nhập hiện tại
+        function checkLogin() {
+            $.ajax({
+                url: 'Account/CheckLogin',
+                dataType: "json",
+                type: 'get',
+                contentType: 'application/json; charset=utf-8',
+                data: null,
+                async: true,
+                processData: true,
+                cache: false,
+                success: function (data) {
+                    if (data.code == 200) {
+                        if (data.response) {
+                            $("#btn__login, #btn__register").hide();
+                            $("#btn__account").removeClass("d-none");
+                            $("#library-tab").prop("disabled", false);
+                            return;
+                        }
+                        if (!data.response) {
+                            $("#btn__login, #btn__register").show();
+                            $("#btn__account").hide();
+                            return;
+                        }
+                        alert("Lỗi không xác định!!");
+                    }
+                },
+                error: function (xhr) {
+                    alert('error' + xhr.statusText);
+                    return;
+                }
+            });
+        }
+
+        // Quản lý option
         $("#hit-tab").on('click',function () {
             console.log("click tab hit");
             $(".tab__genre").removeClass("active");
@@ -52,6 +174,96 @@
         });
         $("#library-tab").on('click', function () {
             console.log("click tab library");
+            LoadFavList();
+        });
+
+        //Yêu thích bài hát
+        $(document).on('click', ".fa-heart", function () {
+            console.log("click to change fav");
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/Account/IsLoggedIn',
+                type: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    if (response.isLoggedIn) {
+                        // User is logged in, perform your logic here
+                        console.log("User is logged in");
+
+                        $.ajax({
+                            url: '/Account/ChangeFavourite',
+                            dataType: "json",
+                            type: 'get',
+                            contentType: false,
+                            data: { id: id },
+                            async: true,
+                            processData: true,
+                            cache: false,
+                            success: function (data) {
+                                if (data.code == 200) {
+                                    // User is logged in, perform your logic here
+                                    LoadPlaylist();
+                                    return;
+                                }
+                                if (data.code == 500) {
+                                    console.log("change fail: " + data.msg);
+                                    return;
+                                }
+                                console.log("Loi khong xac dinh");
+                                return;
+                            },
+                            error: function (xhr, status, error) {
+                                // Handle error
+                                console.error("Error:", error);
+                            }
+                        });
+                    } else {
+                        // User is not logged in, handle accordingly
+                        console.log("User is not logged in");
+                        alert("Bạn chưa đăng nhập");
+                    }
+                },
+                error: function (xhr, status, error) {
+                    // Handle error
+                    console.error("Error:", error);
+                }
+            });
+        });
+        $(document).on('click', '.remove__fav', function () {
+            if (confirm("Bạn có chắc muốn xoá khỏi danh sách yêu thích không?")) {
+                var id = $(this).data('id');
+                $.ajax({
+                    url: '/Account/RemoveFavourite',
+                    dataType: "json",
+                    type: 'get',
+                    contentType: false,
+                    data: { id: id },
+                    async: true,
+                    processData: true,
+                    cache: false,
+                    success: function (data) {
+                        if (data.code == 200) {
+                            LoadFavList();
+                            return;
+                        }
+                        if (data.code == 500) {
+                            console.log("change fail: " + data.msg);
+                            return;
+                        }
+                        console.log("Loi khong xac dinh");
+                        return;
+                    },
+                    error: function (xhr, status, error) {
+                        // Handle error
+                        console.error("Error:", error);
+                    }
+                });
+            }
+            else {
+                return false;
+            }
+        });
+        function LoadFavList() {
             $.ajax({
                 url: 'Home/ListPlaylists',
                 dataType: "json",
@@ -75,9 +287,9 @@
                                 html += `<h5 class="card-title">${p.name}</h5 >`;
                                 html += `<p class="card-text">${p.detail}</p >`;
                                 html += `<a href="@playlistUrl?id=${p.id}" class="btn btn-primary">Nghe</a>`;
-                                html += `<a class="remove__fav" data-id=${p.id} style="margin-left:20px"><i class="fas fa-trash-alt"></i></a></div></div></div></div>`;
+                                html += `<a class="remove__fav" data-id="${p.id}" style="margin-left:20px"><i class="fas fa-trash-alt"></i></a></div></div></div></div>`;
                             }
-                            
+
                         });
                         $('#list__library').html(html);
                     }
@@ -87,7 +299,9 @@
                     return;
                 }
             });
-        });
+        }
+
+        //Quản lý sidebar
         $(document).on('click', ".tab__genre", function () {
             var pid = $(this).data('id');
             LoadPlaylist(pid);
@@ -99,6 +313,8 @@
             // Thêm lớp active cho thẻ được nhấp vào
             $(this).addClass("active");
         });
+
+        //Tìm kiếm
         $('#searchInput').on('input', function () {
             var searchTerm = $(this).val().trim();
             if (searchTerm !== '') {
@@ -136,67 +352,47 @@
             } else {
                 // Nếu ô tìm kiếm trống, ẩn danh sách sản phẩm tìm kiếm
                 $('#searchResults').hide();
+                LoadPlaylist(0);
             }
         });
-
-        // Lắng nghe sự kiện khi người dùng nhấn vào nút tìm kiếm
-        $('#searchButton').on('click', function () {
+        $('#btn__search').on('click', function () {
             // Tương tự như lắng nghe sự kiện input, bạn có thể thực hiện tìm kiếm ở đây
-        });
-        $(document).on('click', ".fa-heart", function () {
-            console.log("click to change fav");
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/Account/IsLoggedIn', // Replace 'YourController' with the name of your controller
-                type: 'GET',
-                dataType: 'json',
-                success: function (response) {
-                    if (response.isLoggedIn) {
-                        // User is logged in, perform your logic here
-                        console.log("User is logged in");
-                        
-                        $.ajax({
-                            url: '/Account/ChangeFavourite',
-                            dataType: "json",
-                            type: 'get',
-                            contentType: false,
-                            data: {id:id},
-                            async: true,
-                            processData: true,
-                            cache: false,
-                            success: function (data) {
-                                if (data.code==200) {
-                                    // User is logged in, perform your logic here
-                                    console.log("check after change: " + data.msg);
-                                    console.log("check after change: " + data.list);
-                                    LoadPlaylist();
-                                    return;
-                                }
-                                if (data.code == 500) {
-                                    console.log("change fail: " + data.msg);
-                                    return;
-                                }
-                                console.log("Loi khong xac dinh");
-                                return;
-                            },
-                            error: function (xhr, status, error) {
-                                // Handle error
-                                console.error("Error:", error);
-                            }
-                        });
-                    } else {
-                        // User is not logged in, handle accordingly
-                        console.log("User is not logged in");
-                        alert("Bạn chưa đăng nhập");
+            var searchTerm = $("#searchInput").val().trim();
+            if (searchTerm !== '') {
+                var requestData = { searchText: searchTerm };
+                $.ajax({
+                    url: 'Home/Search',
+                    dataType: "json",
+                    type: 'get',
+                    contentType: 'application/json; charset=utf-8',
+                    data: requestData,
+                    async: true,
+                    processData: true,
+                    cache: false,
+                    success: function (data) {
+                        if (data.code == 200) {
+    /*                        console.log(data.list);*/
+                            $('#list__playlists').empty();
+                            var html = ``;
+                            $.each(data.list, function (i, p) {
+                                html += generateProduct(p);
+                            });
+                            $('#list__playlists').html(html);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert('error' + xhr.statusText);
+                        return;
                     }
-                },
-                error: function (xhr, status, error) {
-                    // Handle error
-                    console.error("Error:", error);
-                }
-            });
+                });
+            } else {
+                // Nếu ô tìm kiếm trống, ẩn danh sách sản phẩm tìm kiếm
+                LoadPlaylist(0);
+            }
+
         });
 
+        //Chức năng đăng nhập
         $("#password").keypress(function (event) {
             if (event.keyCode === 13) {
                 login();
@@ -205,18 +401,52 @@
         $("#showPasswordBtn").mouseover(function () {
             $("#password").attr("type", "text");
         });
-
-        // Di chuột ra khỏi nút hiện mật khẩu
         $("#showPasswordBtn").mouseleave(function () {
             $("#password").attr("type", "password");
         });
         $("#submit__login").on('click', function () {
             login();
         });
+        function login() {
+            var email = $('#email').val().trim();
+            var password = $('#password').val().trim();
+            if (email.length == 0 || password.length == 0) {
+                alert("vui lòng nhập đủ dữ liệu");
+                return;
+            }
+            var formData = new FormData();
+            formData.append('email', email);
+            formData.append('password', password);
+
+            $.ajax({
+                url: '@Url.Action("Login","Account")',
+                dataType: "json",
+                type: 'post',
+                contentType: false,
+                data: formData,
+                async: true,
+                processData: false,
+                cache: false,
+                success: function (data) {
+                    if (data.code == 200) {
+                        console.log(data.response);
+                        alert("" + data.msg + ". Xin chào, " + data.response.name);
+/*                        console.log(data.response);*/
+                        $('#email').val('');
+                        $('#password').val('');
+                        $("#loginModal").modal("hide");
+                        location.reload();
+
+                    } else {
+                        alert(data.msg)
+                    }
+                }
+            });
+        }
+
+        //Chức năng đăng ký
         $('#age').on('input', function () {
-            // Lấy giá trị hiện tại của input range
             var value = $(this).val();
-            // Hiển thị giá trị lên phần tử span có id là "rangeValue"
             $('#ageValue').text(value);
         });
         $("#submit__register").on('click', function(){
@@ -275,166 +505,6 @@
             });
 
         });
-        function LoadPlaylist(check) {
-            var requestData = null;
-            if (check != 0) {
-                requestData = { id: check }
-            }
-            $.ajax({
-                url: 'Home/ListPlaylists',
-                dataType: "json",
-                type: 'get',
-                contentType: 'application/json; charset=utf-8',
-                data: requestData,
-                async: true,
-                processData: true,
-                cache: false,
-                success: function (data) {
-                    console.log(data)
-                    if (data.code == 200) {
-/*                        console.log(data.list);*/
-                        $('#list__playlists').empty();
-                        var html = ``;
-                        $.each(data.list, function (i, p) {
-                            html += generateProduct(p);
-                        });
-                        $('#list__playlists').html(html);
-                    }
-                },
-                error: function (xhr) {
-                    alert('error' + xhr.statusText);
-                    return;
-                }
-            });
-        }
-        function LoadRanking(check) {
-            var requestData = null;
-            if (check != 0) {
-                requestData = { id: check }
-            }
-            $.ajax({
-                url: 'Home/LoadRankingPlaylists',
-                dataType: "json",
-                type: 'get',
-                contentType: 'application/json; charset=utf-8',
-                data: requestData,
-                async: true,
-                processData: true,
-                cache: false,
-                success: function (data) {
-                    //console.log(data)
-                    if (data.code == 200) {
-                        console.log(data.list);
-                        $('#list__ranking').empty();
-                        var htmlR = ``;
-                        $.each(data.list, function (i, p) {
-                            if (i == 10) {
-                                return false;
-                            }
-                            htmlR += generateProductRanking(i, p);
-                        });
-                        $('#list__ranking').html(htmlR);
-                    }
-                },
-                error: function (xhr) {
-                    alert('error' + xhr.statusText);
-                    return;
-                }
-            });
-        }
-        function generateProduct(p) {
-            var isFavClass = p.isFav ? " active" : "";
-            var html = `<div class="col-md-3 m-2"><div class="card product-card">`;
-            html += `<a href="@playlistUrl?id=${p.id}"><img src="/image/${p.thumbnail}" alt="..." class="img-thumbnail">`;
-            html += `<div class="play-icon-container"><i class="fas fa-play play-icon"></i></div></a>`;
-            html += `<i class="fas fa-heart heart-icon ${isFavClass}" data-id="${p.id}"></i><div class="card-body">`;
-            html += `<h5 class="card-title">${p.name}</h5>`;
-            html += `<p class="card-text">${p.detail}</p></div></div></div>`;
-            return html;
-        }
-        function generateProductRanking(i, p) {
-            var htmlR = `<tr >`;
-            htmlR += `<th scope="row">${(i + 1)}</th>`;
-            htmlR += `<td><a href="@playlistUrl?id=${p.id}">${p.name}</a></td>`;
-            htmlR += `<td>${p.artist}</td>`;
-            htmlR += `<td>${p.viewCount}</td></tr>`;
-            return htmlR;
-        }
-        function checkLogin() {
-            $.ajax({
-                url: 'Account/CheckLogin',
-                dataType: "json",
-                type: 'get',
-                contentType: 'application/json; charset=utf-8',
-                data: null,
-                async: true,
-                processData: true,
-                cache: false,
-                success: function (data) {
-                    //console.log(data)
-                    if (data.code == 200) {
-                        console.log(data.response);
-                        if (data.response) {
-                            $("#btn__login, #btn__register").hide();
-                            $("#btn__account").removeClass("d-none");
-                            $("#library-tab").prop("disabled", false);
-/*                            console.log(data.msg);*/
-                            return;
-                        }
-                        if (!data.response) {
-                            $("#btn__login, #btn__register").show();
-                            $("#btn__account").hide();
-/*                            console.log(data.msg);*/
-                            return;
-                        }
-                        alert("Lỗi không xác định!!");
-                    }
-                },
-                error: function (xhr) {
-                    alert('error' + xhr.statusText);
-                    return;
-                }
-            });
-        }
-        function login() {
-/*            console.log('login..');*/
-            var email = $('#email').val().trim();
-            var password = $('#password').val().trim();
-
-            if (email.length == 0 || password.length == 0) {
-                alert("vui lòng nhập đủ dữ liệu");
-                return;
-            }
-
-            var formData = new FormData();
-            formData.append('email', email);
-            formData.append('password', password);
-
-            $.ajax({
-                url: '@Url.Action("Login","Account")',
-                dataType: "json",
-                type: 'post',
-                contentType: false,
-                data: formData,
-                async: true,
-                processData: false,
-                cache: false,
-                success: function (data) {
-                    if (data.code == 200) {
-                        console.log(data.response);
-                        alert("" + data.msg + ". Xin chào, " + data.response.name);
-/*                        console.log(data.response);*/
-                        $('#email').val('');
-                        $('#password').val('');
-                        $("#loginModal").modal("hide");
-                        location.reload();
-
-                    } else {
-                        alert(data.msg)
-                    }
-                }
-            });
-        }
     </script>
 }
 
