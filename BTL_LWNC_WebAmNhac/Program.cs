@@ -20,7 +20,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/Forbidden/";
     });
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddTransient<IHomeInterface, HomeService>();
+builder.Services.AddScoped<IHomeInterface, HomeService>();
 
 var app = builder.Build();
 
