@@ -12,8 +12,8 @@ namespace BTL_LWNC_WebAmNhac.Models
         [ForeignKey("Song")]
         public int SongID { get; set; }
 
-        public virtual Playlist? Playlist { get; set; }
+        public Playlist? Playlist { get; set; }
 
-        public virtual Song? Song { get; set; }
+        public Song? Song { get; set; }
     }
 }

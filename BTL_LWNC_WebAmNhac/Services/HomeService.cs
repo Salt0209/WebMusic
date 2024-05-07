@@ -110,24 +110,25 @@ namespace BTL_LWNC_WebAmNhac.Services
 
         public List<object> Search(string searchText)
         {
-            var searchResults = _context.Playlist
-                .Where(delegate (Playlist p)
-                {
-                    if (ConvertToUnSign(p.Name).IndexOf(searchText, StringComparison.CurrentCultureIgnoreCase) >= 0)
-                        return true;
-                    else
-                        return false;
-                }).AsQueryable()
+            var searchResults = _context.Playlist.AsNoTracking()
+                .Include(p => p.User)
+                .Include(p=>p.PlaylistDetails)
+                .ToList()
+                .Where(p => FilterPlaylist(p, searchText))
                 .Select(p => new
                 {
                     Id = p.ID,
                     Name = p.Name,
-                    Artist = p.User != null ? p.User.Name : "Unknown",
+                    Artist = p.User.Name,
                     Thumbnail = p.Thumbnail
-                })
-            .ToList();
+                });
 
             return searchResults.Cast<object>().ToList();
+        }
+        private bool FilterPlaylist(Playlist p, string searchText)
+        {
+            return ConvertToUnSign(p.Name).IndexOf(searchText, StringComparison.CurrentCultureIgnoreCase) >= 0
+                || ConvertToUnSign(p.User.Name).IndexOf(searchText, StringComparison.CurrentCultureIgnoreCase) >= 0;
         }
         private string ConvertToUnSign(string input)
         {

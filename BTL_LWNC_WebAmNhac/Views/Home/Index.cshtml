@@ -3,7 +3,6 @@
 
     string playlistUrl = Url.Action("Playlist", "PlaylistDetails");
 }
-@model Home
 <!-- Danh sách bài hát -->
 <ul class="nav nav-tabs" id="myTab" role="tablist">
     <li class="nav-item" role="presentation">
@@ -29,7 +28,87 @@
 <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
     @Html.Partial("_RegisterPartialView")
 </div>
+<div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+    @Html.Partial("_ProfilePartialView")
+</div>
 
+@section Styles{
+    <style>
+        /* Custom CSS for fixed width list group */
+        .fixed-width-list-group {
+            width: 300px; /* Set your desired fixed width */
+        }
+        .product-card {
+            position: relative;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+            .product-card .img-thumbnail {
+                width: 100%;
+                height: 200px; /* Điều chỉnh chiều cao tùy ý */
+                object-fit: cover; /* Đảm bảo hình ảnh được cắt để phù hợp với kích thước */
+            }
+
+            .product-card .card-body {
+                padding: 10px;
+            }
+
+            .product-card .card-text {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-height: 3.6em; /* Two lines of text */
+                line-height: 1.8em; /* Height of one line */
+            }
+
+        .heart-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: none; /* Initially hidden */
+            color: white;
+        }
+
+            .heart-icon.active {
+                color: red; /* Active color */
+            }
+
+        .product-card:hover .heart-icon {
+            display: block; /* Display when hovered */
+        }
+
+        .play-icon-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .play-icon {
+            font-size: 3rem; /* Kích thước của biểu tượng play */
+            color: #ffffff; /* Màu của biểu tượng play */
+        }
+
+        .play-icon-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0; /* Ẩn nút play ban đầu */
+            transition: opacity 0.3s; /* Thêm hiệu ứng chuyển đổi */
+        }
+
+        .product-card:hover .play-icon-container {
+            opacity: 1; /* Hiển thị nút play khi di chuột vào */
+        }
+
+        .play-icon {
+            font-size: 3rem; /* Kích thước của biểu tượng play */
+            color: #ffffff; /* Màu của biểu tượng play */
+        }
+    </style>
+}
 
 
 @section Scripts{
@@ -80,7 +159,7 @@
             html += `<div class="play-icon-container"><i class="fas fa-play play-icon"></i></div></a>`;
             html += `<i class="fas fa-heart heart-icon ${isFavClass}" data-id="${p.id}"></i><div class="card-body">`;
             html += `<h5 class="card-title">${p.name}</h5>`;
-            html += `<p class="card-text">${p.detail}</p></div></div></div>`;
+            html += `<p class="card-text">${p.detail !== undefined ? p.detail : p.artist}</p></div></div></div>`;
             return html;
         }
         //Load bảng xếp hạng
@@ -489,6 +568,11 @@
                 processData: false,
                 cache: false,
                 success: function (data) {
+                    if (data.code == 400) {
+                        $("#alertEmailError").show();
+                        $("#emailError").text(data.msg);
+                        return;
+                    }
                     if (data.code == 200) {
                         alert("" + data.msg);
                         $('#emailR').val('');
@@ -498,13 +582,39 @@
                         $('#age').val('18');
                         $("#registerModal").modal("hide");
                         location.reload();
-                    } else {
-                        alert(data.msg)
+                        return;
                     }
+                    alert(data.msg);
                 }
             });
 
         });
+
+        //Chức năng tài khoản
+        $("#profile__button").click(function () {
+            $.ajax({
+                url: '@Url.Action("GetProfile","Account")',
+                dataType: "json",
+                type: 'post',
+                contentType: false,
+                data: null,
+                async: true,
+                processData: false,
+                cache: false,
+                success: function (data) {
+                    console.log(data.data);
+                    console.log(data.data[0].name);
+                    $("#name__profile").text(data.data[0].name);
+                    $("#age__profile").text(`Tuổi: ${data.data[0].age}`);
+                    $("#email__profile").text(data.data[0].email);
+                    $("#role__profile").text(data.data[0].role);
+                }
+            });
+        });
+        $("#changepassword__button").click(function () {
+            alert("Coming soon!");
+        });
+
     </script>
 }
 

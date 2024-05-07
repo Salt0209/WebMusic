@@ -16,6 +16,6 @@ namespace BTL_LWNC_WebAmNhac.Models
 
         public string? Role { get; set; }
 
-        public virtual ICollection<Playlist> Playlists { get; set; } = new List<Playlist>();
+        public Playlist Playlists { get; set; }
     }
 }
