@@ -6,7 +6,7 @@
 
 <header>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container">
+        <div class="container ms-5">
             <!-- Logo -->
             <a class="navbar-brand" href="@Url.Action("Index","Home")">
                 <img src="~/image/logo.jpg" alt="Your Logo" width="30" height="30" class="d-inline-block align-top">
@@ -19,7 +19,7 @@
             <div class="d-flex ms-auto">
                 <div class="position-relative">
                     <div class="d-flex ms-auto">
-                        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" id="searchInput">
+                        <input class="form-control me-2" type="search" placeholder="Type name or author..." aria-label="Search" id="searchInput">
                         <button class="btn btn-outline-success" type="submit" id="btn__search">Search</button>
                     </div>
                     <div id="searchResults" class="dropdown-menu dropdown-menu-end mt-2 position-absolute" style="width: 300px; max-height: 200px; overflow-y: auto; display:none;">
@@ -42,8 +42,8 @@
                         Tài khoản
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">Thông tin tài khoản</a></li>
-                        <li><a class="dropdown-item" href="#">Đổi mật khẩu</a></li>
+                        <li><a class="dropdown-item" id="profile__button" data-bs-toggle="modal" data-bs-target="#profileModal">Thông tin tài khoản</a></li>
+                        <li><a class="dropdown-item" id="changepassword__button" href="#">Đổi mật khẩu</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="@Url.Action("LogOut","Account")">Đăng xuất</a></li>
                     </ul>

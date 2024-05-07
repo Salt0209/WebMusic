@@ -9,6 +9,6 @@ namespace BTL_LWNC_WebAmNhac.Models
 
         public string? Name { get; set; }
 
-        public virtual ICollection<Song> Songs { get; set; } = new List<Song>();
+        public virtual Song? Songs { get; set; }
     }
 }

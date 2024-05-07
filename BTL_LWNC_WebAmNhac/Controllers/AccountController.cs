@@ -25,32 +25,8 @@ namespace BTL_LWNC_WebAmNhac.Controllers
 			_context = context;
 		}
 
-		// GET: Users
-		public async Task<IActionResult> Index()
-		{
-			  return _context.User != null ? 
-						  View(await _context.User.ToListAsync()) :
-						  Problem("Entity set 'BTL_LWNC_WebAmNhacContext.User'  is null.");
-		}
-
-		// GET: Users/Details/5
-		public async Task<IActionResult> Details(int? id)
-		{
-			if (id == null || _context.User == null)
-			{
-				return NotFound();
-			}
-
-			var user = await _context.User
-				.FirstOrDefaultAsync(m => m.ID == id);
-			if (user == null)
-			{
-				return NotFound();
-			}
-
-			return View(user);
-		}
-		public IActionResult Login()
+        #region Check/Login/Logout
+        public IActionResult Login()
 		{
 			return View();
 		}
@@ -95,7 +71,7 @@ namespace BTL_LWNC_WebAmNhac.Controllers
 		{
 			bool check = IsLogin();
 
-            return Json(new { code = 200, response = check, msg = "Đã check" }); ;
+            return Json(new { code = 200, response = check, msg = "Đã check" });
 		}
         [HttpGet]
         public IActionResult IsLoggedIn()
@@ -108,6 +84,9 @@ namespace BTL_LWNC_WebAmNhac.Controllers
 			return User.Identity.IsAuthenticated;
 
         }
+        #endregion
+
+        #region Favourite
         [HttpGet]
         public JsonResult ChangeFavourite(int id)
         {
@@ -133,6 +112,7 @@ namespace BTL_LWNC_WebAmNhac.Controllers
             }
         }
         [HttpGet]
+		[Authorize]
         public JsonResult RemoveFavourite(int id)
         {
             try
@@ -149,14 +129,22 @@ namespace BTL_LWNC_WebAmNhac.Controllers
                 return Json(new { code = 500, msg = "Lấy dữ liệu thất bại:" + ex.Message });
             }
         }
+        #endregion
+
+        #region Register
         public IActionResult Register()
 		{
 			return View();
 		}
 
 		[HttpPost]
-		public JsonResult Register(string name,string email, int age, string password)
+		public async Task<JsonResult> Register(string name,string email, int age, string password)
 		{
+			if (await _context.User.AsNoTracking().FirstOrDefaultAsync(p => p.Email == email) != null)
+			{
+                return Json(new { code = 400, msg = "Email đã tồn tại" });
+            }
+
 			var newUser = new User
 			{
 				Name = name,
@@ -175,118 +163,32 @@ namespace BTL_LWNC_WebAmNhac.Controllers
                 return Json(new { code = 500, msg = "Đăng ký thất bại" });
             }
         }
+        #endregion
 
-		// GET: Users/Create
-		public IActionResult Create()
-		{
-			return View();
-		}
+        #region Profile
+        public async Task<JsonResult> getProfile() {
+            var userIdClaim = User.FindFirst("UserId");
+            if (userIdClaim != null)
+            {
+                string userId = userIdClaim.Value;
+                // Đây là ID của người dùng đang đăng nhập
+                var user = _context.User.Where(p => p.ID == Int32.Parse(userId))
+                    .Select(p=> new
+                    {
+                        p.Name,
+                        p.Email,
+                        p.Age,
+                        p.Role
+                    });
+                return Json(new { code = 200,data = user, msg = "Bad Request" });
+            }
 
-		// POST: Users/Create
-		// To protect from overposting attacks, enable the specific properties you want to bind to.
-		// For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Create([Bind("ID,Name,Email,Password,Role")] User user)
-		{
-			if (ModelState.IsValid)
-			{
-				_context.Add(user);
-				await _context.SaveChangesAsync();
-				return RedirectToAction(nameof(Index));
-			}
-			return View(user);
-		}
+            return Json(new { code = 400, msg="Bad Request" });
+            
+        }
+        #endregion
 
-		// GET: Users/Edit/5
-		public async Task<IActionResult> Edit(int? id)
-		{
-			if (id == null || _context.User == null)
-			{
-				return NotFound();
-			}
-
-			var user = await _context.User.FindAsync(id);
-			if (user == null)
-			{
-				return NotFound();
-			}
-			return View(user);
-		}
-
-		// POST: Users/Edit/5
-		// To protect from overposting attacks, enable the specific properties you want to bind to.
-		// For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Edit(int id, [Bind("ID,Name,Email,Password,Role")] User user)
-		{
-			if (id != user.ID)
-			{
-				return NotFound();
-			}
-
-			if (ModelState.IsValid)
-			{
-				try
-				{
-					_context.Update(user);
-					await _context.SaveChangesAsync();
-				}
-				catch (DbUpdateConcurrencyException)
-				{
-					if (!UserExists(user.ID))
-					{
-						return NotFound();
-					}
-					else
-					{
-						throw;
-					}
-				}
-				return RedirectToAction(nameof(Index));
-			}
-			return View(user);
-		}
-
-		// GET: Users/Delete/5
-		public async Task<IActionResult> Delete(int? id)
-		{
-			if (id == null || _context.User == null)
-			{
-				return NotFound();
-			}
-
-			var user = await _context.User
-				.FirstOrDefaultAsync(m => m.ID == id);
-			if (user == null)
-			{
-				return NotFound();
-			}
-
-			return View(user);
-		}
-
-		// POST: Users/Delete/5
-		[HttpPost, ActionName("Delete")]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> DeleteConfirmed(int id)
-		{
-			if (_context.User == null)
-			{
-				return Problem("Entity set 'BTL_LWNC_WebAmNhacContext.User'  is null.");
-			}
-			var user = await _context.User.FindAsync(id);
-			if (user != null)
-			{
-				_context.User.Remove(user);
-			}
-			
-			await _context.SaveChangesAsync();
-			return RedirectToAction(nameof(Index));
-		}
-
-		private bool UserExists(int id)
+        private bool UserExists(int id)
 		{
 		  return (_context.User?.Any(e => e.ID == id)).GetValueOrDefault();
 		}
